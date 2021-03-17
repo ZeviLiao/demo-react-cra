@@ -1,23 +1,19 @@
 import logo from './logo.svg';
 import './App.css';
 
+const shadow = {
+  boxShadow: '0 0 10px 10px #eaeaea',
+  padding: 20, // 省略 px，樣式會自動帶入單位變成 '20px'
+};
+
+
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="container" style={shadow}>
+      <input maxLength="10"></input>
+      <div className="chevron chevron-up" />
+      <div className="number">256</div>
+      <div className="chevron chevron-down" />
     </div>
   );
 }
