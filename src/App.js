@@ -1,4 +1,5 @@
-import logo from './logo.svg';
+// import logo from './logo.svg';
+import { useState } from 'react';
 import './App.css';
 
 const shadow = {
@@ -6,14 +7,23 @@ const shadow = {
   padding: 20, // 省略 px，樣式會自動帶入單位變成 '20px'
 };
 
-
 function App() {
+  const [count, setCount] = useState(256)
+
   return (
     <div className="container" style={shadow}>
-      <input maxLength="10"></input>
-      <div className="chevron chevron-up" />
-      <div className="number">256</div>
-      <div className="chevron chevron-down" />
+      {console.log('render')}
+      <div className="chevron chevron-up"
+        onClick={() => {
+          setCount(count + 1)
+        }}
+      />
+      <div className="number">{count}</div>
+      <div className="chevron chevron-down"
+        onClick={() => {
+          setCount(count - 1)
+        }}
+      />
     </div>
   );
 }
