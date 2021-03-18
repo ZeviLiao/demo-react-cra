@@ -7,30 +7,44 @@ import './App.css';
 //   padding: 20, // 省略 px，樣式會自動帶入單位變成 '20px'
 // };
 
-
-
-
-function App() {
+function Counter() {
   const [count, setCount] = useState(2)
-  const handleIncrement = () => setCount(count + 1)
-  const handleDecrement = () => setCount(count - 1)
+
+  const handleClick = (type) => () => {
+    if (type === 'increment') {
+      setCount(count + 1);
+    }
+    if (type === 'decrement') {
+      setCount(count - 1);
+    }
+  };
+
   return (
-    <div className="container" /*style={shadow}*/> 
-      {console.log('render')}
+    <div className="container" /*style={shadow}*/>
+      {/* {console.log('render')} */}
       <div className="chevron chevron-up"
         style={{
           visibility: count >= 3 && 'hidden',
         }}
-        onClick={handleIncrement}
+        onClick={handleClick('increment')}
       />
       <div className="number">{count}</div>
       <div className="chevron chevron-down"
         style={{
           visibility: count <= 0 && 'hidden',
         }}
-        onClick={handleDecrement}
+        onClick={handleClick('decrement')}
       />
     </div>
+  );
+}
+
+function App() {
+
+  // const counters = Array.from({length:3},(_,i)=> i)
+  const counters = [...Array(5).keys()]  /* [0, 1, 2, 3, 4] */
+  return (
+    counters.map((i)=><Counter key={i}/>)
   );
 }
 
