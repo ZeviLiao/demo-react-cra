@@ -119,12 +119,28 @@ const WeatherApp = () => {
 
   useEffect(() => {
     console.log('execute function in useEffect');
-    fetchCurrentWeather();
-    fetchWeatherForecast();
+    // STEP 1：在 useEffect 中定義 async function 取名為 fetchData
+    const fetchData = async () => {
+      // STEP 2：使用 Promise.all 搭配 await 等待兩個 API 都取得回應後才繼續
+      // STEP 6：使用陣列的解構賦值把資料取出
+      const [currentWeather, weatherForecast] = await Promise.all([
+        fetchCurrentWeather(),
+        fetchWeatherForecast(),
+      ]);
+
+      // STEP 7：把取得的資料透過物件的解構賦值放入
+      setWeatherElement({
+        ...currentWeather,
+        ...weatherForecast,
+      });
+    };
+
+    fetchData();
   }, []);
 
   const fetchCurrentWeather = () => {
-    fetch(
+    // STEP 3-1：修改函式，把 fetch API 回傳的 Promise 直接回傳出去
+    return fetch(
       'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-507B37E0-0383-4D8C-878D-628B54EC3536&locationName=臺北',
     )
       .then(response => response.json())
@@ -141,19 +157,20 @@ const WeatherApp = () => {
           {},
         );
 
-        setWeatherElement(prevState => ({
-          ...prevState,
+        // STEP 3-2：把取得的資料內容回傳出去，而不是在這裡 setWeatherElement
+        return {
           observationTime: locationData.time.obsTime,
           locationName: locationData.locationName,
           temperature: weatherElements.TEMP,
           windSpeed: weatherElements.WDSD,
           humid: weatherElements.HUMD,
-        }));
+        };
       });
   };
 
   const fetchWeatherForecast = () => {
-    fetch(
+    // STEP 4-1：修改函式，把 fetch API 回傳的 Promise 直接回傳出去
+    return fetch(
       'https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-507B37E0-0383-4D8C-878D-628B54EC3536&locationName=臺北市',
     )
       .then(response => response.json())
@@ -169,13 +186,13 @@ const WeatherApp = () => {
           {},
         );
 
-        setWeatherElement(prevState => ({
-          ...prevState,
+        // STEP 4-2：把取得的資料內容回傳出去，而不是在這裡 setWeatherElement
+        return {
           description: weatherElements.Wx.parameterName,
           weatherCode: weatherElements.Wx.parameterValue,
           rainPossibility: weatherElements.PoP.parameterName,
           comfortability: weatherElements.CI.parameterName,
-        }));
+        };
       });
   };
 
