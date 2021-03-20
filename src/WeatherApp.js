@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// STEP 1：從 react 中載入 useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { ReactComponent as CloudyIcon } from './images/day-cloudy.svg';
 import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
@@ -103,6 +104,60 @@ const Redo = styled.div`
   }
 `;
 
+const fetchCurrentWeather = () => {
+  return fetch(
+    'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-507B37E0-0383-4D8C-878D-628B54EC3536&locationName=臺北',
+  )
+    .then(response => response.json())
+    .then(data => {
+      const locationData = data.records.location[0];
+
+      const weatherElements = locationData.weatherElement.reduce(
+        (neededElements, item) => {
+          if (['WDSD', 'TEMP', 'HUMD'].includes(item.elementName)) {
+            neededElements[item.elementName] = item.elementValue;
+          }
+          return neededElements;
+        },
+        {},
+      );
+
+      return {
+        observationTime: locationData.time.obsTime,
+        locationName: locationData.locationName,
+        temperature: weatherElements.TEMP,
+        windSpeed: weatherElements.WDSD,
+        humid: weatherElements.HUMD,
+      };
+    });
+};
+
+const fetchWeatherForecast = () => {
+  return fetch(
+    'https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-507B37E0-0383-4D8C-878D-628B54EC3536&locationName=臺北市',
+  )
+    .then(response => response.json())
+    .then(data => {
+      const locationData = data.records.location[0];
+      const weatherElements = locationData.weatherElement.reduce(
+        (neededElements, item) => {
+          if (['Wx', 'PoP', 'CI'].includes(item.elementName)) {
+            neededElements[item.elementName] = item.time[0].parameter;
+          }
+          return neededElements;
+        },
+        {},
+      );
+
+      return {
+        description: weatherElements.Wx.parameterName,
+        weatherCode: weatherElements.Wx.parameterValue,
+        rainPossibility: weatherElements.PoP.parameterName,
+        comfortability: weatherElements.CI.parameterName,
+      };
+    });
+};
+
 const WeatherApp = () => {
   console.log('--- invoke function component ---');
   const [weatherElement, setWeatherElement] = useState({
@@ -117,84 +172,34 @@ const WeatherApp = () => {
     comfortability: '',
   });
 
-  useEffect(() => {
-    console.log('execute function in useEffect');
-    // STEP 1：在 useEffect 中定義 async function 取名為 fetchData
-    const fetchData = async () => {
-      // STEP 2：使用 Promise.all 搭配 await 等待兩個 API 都取得回應後才繼續
-      // STEP 6：使用陣列的解構賦值把資料取出
+  // STEP 2：使用 useCallback 並將回傳的函式取名為 fetchData
+  const fetchData = useCallback(() => {
+    // STEP 3：把原本的 fetchData 改名為 fetchingData 放到 useCallback 的函式內
+    const fetchingData = async () => {
       const [currentWeather, weatherForecast] = await Promise.all([
         fetchCurrentWeather(),
         fetchWeatherForecast(),
       ]);
 
-      // STEP 7：把取得的資料透過物件的解構賦值放入
       setWeatherElement({
         ...currentWeather,
         ...weatherForecast,
       });
     };
 
-    fetchData();
+    // STEP 4：一樣記得要呼叫 fetchingData 這個方法
+    fetchingData();
+
+    // STEP 5：因為 fetchingData 沒有相依到 React 組件中的資料狀態，所以 dependencies 帶入空陣列
   }, []);
 
-  const fetchCurrentWeather = () => {
-    // STEP 3-1：修改函式，把 fetch API 回傳的 Promise 直接回傳出去
-    return fetch(
-      'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-507B37E0-0383-4D8C-878D-628B54EC3536&locationName=臺北',
-    )
-      .then(response => response.json())
-      .then(data => {
-        const locationData = data.records.location[0];
+  useEffect(() => {
+    console.log('execute function in useEffect');
 
-        const weatherElements = locationData.weatherElement.reduce(
-          (neededElements, item) => {
-            if (['WDSD', 'TEMP', 'HUMD'].includes(item.elementName)) {
-              neededElements[item.elementName] = item.elementValue;
-            }
-            return neededElements;
-          },
-          {},
-        );
+    fetchData();
 
-        // STEP 3-2：把取得的資料內容回傳出去，而不是在這裡 setWeatherElement
-        return {
-          observationTime: locationData.time.obsTime,
-          locationName: locationData.locationName,
-          temperature: weatherElements.TEMP,
-          windSpeed: weatherElements.WDSD,
-          humid: weatherElements.HUMD,
-        };
-      });
-  };
-
-  const fetchWeatherForecast = () => {
-    // STEP 4-1：修改函式，把 fetch API 回傳的 Promise 直接回傳出去
-    return fetch(
-      'https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-507B37E0-0383-4D8C-878D-628B54EC3536&locationName=臺北市',
-    )
-      .then(response => response.json())
-      .then(data => {
-        const locationData = data.records.location[0];
-        const weatherElements = locationData.weatherElement.reduce(
-          (neededElements, item) => {
-            if (['Wx', 'PoP', 'CI'].includes(item.elementName)) {
-              neededElements[item.elementName] = item.time[0].parameter;
-            }
-            return neededElements;
-          },
-          {},
-        );
-
-        // STEP 4-2：把取得的資料內容回傳出去，而不是在這裡 setWeatherElement
-        return {
-          description: weatherElements.Wx.parameterName,
-          weatherCode: weatherElements.Wx.parameterValue,
-          rainPossibility: weatherElements.PoP.parameterName,
-          comfortability: weatherElements.CI.parameterName,
-        };
-      });
-  };
+    // STEP 6：把透過 useCallback 回傳的函式放到 useEffect 的 dependencies 中
+  }, [fetchData]);
 
   return (
     <Container>
@@ -218,13 +223,7 @@ const WeatherApp = () => {
           <RainIcon />
           {Math.round(weatherElement.rainPossibility)} %
         </Rain>
-
-        <Redo
-          onClick={() => {
-            fetchCurrentWeather();
-            fetchWeatherForecast();
-          }}
-        >
+        <Redo onClick={fetchData}>
           最後觀測時間：
           {new Intl.DateTimeFormat('zh-TW', {
             hour: 'numeric',
