@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { ReactComponent as CloudyIcon } from './images/day-cloudy.svg';
 import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
@@ -104,6 +104,7 @@ const Redo = styled.div`
 `;
 
 const WeatherApp = () => {
+  console.log('--- invoke function component ---');
   const [currentWeather, setCurrentWeather] = useState({
     observationTime: '2019-10-02 22:10:00',
     locationName: '臺北市',
@@ -113,16 +114,19 @@ const WeatherApp = () => {
     humid: 0.88,
   });
 
-  const handleClick = () => {
+  useEffect(() => {
+    console.log('execute function in useEffect');
+    fetchCurrentWeather();
+  }, []);
+
+  const fetchCurrentWeather = () => {
     fetch(
       'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-507B37E0-0383-4D8C-878D-628B54EC3536&locationName=臺北',
     )
       .then(response => response.json())
       .then(data => {
-        // STEP 1：定義 `locationData` 把回傳的資料中會用到的部分取出來
         const locationData = data.records.location[0];
 
-        // STEP 2：將風速（WDSD）、氣溫（TEMP）和濕度（HUMD）的資料取出
         const weatherElements = locationData.weatherElement.reduce(
           (neededElements, item) => {
             if (['WDSD', 'TEMP', 'HUMD'].includes(item.elementName)) {
@@ -133,7 +137,6 @@ const WeatherApp = () => {
           {},
         );
 
-        // STEP 3：要使用到 React 組件中的資料
         setCurrentWeather({
           observationTime: locationData.time.obsTime,
           locationName: locationData.locationName,
@@ -147,6 +150,7 @@ const WeatherApp = () => {
 
   return (
     <Container>
+      {console.log('render')}
       <WeatherCard>
         <Location>{currentWeather.locationName}</Location>
         <Description>{currentWeather.description}</Description>
@@ -165,7 +169,7 @@ const WeatherApp = () => {
           {Math.round(currentWeather.humid * 100)} %
         </Rain>
 
-        <Redo onClick={handleClick}>
+        <Redo onClick={fetchCurrentWeather}>
           最後觀測時間：
           {new Intl.DateTimeFormat('zh-TW', {
             hour: 'numeric',
