@@ -26,3 +26,15 @@ yarn add --dev @emotion/babel-plugin
   "plugins": ["@emotion"]
 }
 ```
+
+reset css
+```
+yarn add normalize.css
+```
+
+in index.js file add line of code.
+```
+@import-normalize;
+
+```
+
