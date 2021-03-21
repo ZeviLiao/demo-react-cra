@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+// STEP 2：匯入 useMemo
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import WeatherIcon from './WeatherIcon.js';
 import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
 import { ReactComponent as RainIcon } from './images/rain.svg';
 import { ReactComponent as RedoIcon } from './images/refresh.svg';
+import sunriseAndSunsetData from './sunrise-sunset.json';
 
 const Container = styled.div`
   background-color: #ededed;
@@ -153,6 +155,38 @@ const fetchWeatherForecast = () => {
     });
 };
 
+// STEP 1：定義 getMoment 方法
+const getMoment = locationName => {
+  const location = sunriseAndSunsetData.find(
+    data => data.locationName === locationName,
+  );
+
+  if (!location) return null;
+
+  const now = new Date();
+  const nowDate = Intl.DateTimeFormat('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(now)
+    .replace(/\//g, '-');
+
+  const locationDate =
+    location.time && location.time.find(time => time.dataTime === nowDate);
+  const sunriseTimestamp = new Date(
+    `${locationDate.dataTime} ${locationDate.sunrise}`,
+  ).getTime();
+  const sunsetTimestamp = new Date(
+    `${locationDate.dataTime} ${locationDate.sunset}`,
+  ).getTime();
+  const nowTimeStamp = now.getTime();
+
+  return sunriseTimestamp <= nowTimeStamp && nowTimeStamp <= sunsetTimestamp
+    ? 'day'
+    : 'night';
+};
+
 const WeatherApp = () => {
   console.log('--- invoke function component ---');
   const [weatherElement, setWeatherElement] = useState({
@@ -183,6 +217,11 @@ const WeatherApp = () => {
     fetchingData();
   }, []);
 
+  // STEP 3：透過 useMemo 避免每次都須重新計算取值，記得帶入 dependencies
+  const moment = useMemo(() => getMoment(weatherElement.locationName), [
+    weatherElement.locationName,
+  ]);
+
   useEffect(() => {
     console.log('execute function in useEffect');
 
@@ -201,9 +240,10 @@ const WeatherApp = () => {
           <Temperature>
             {Math.round(weatherElement.temperature)} <Celsius>°C</Celsius>
           </Temperature>
+          {/* STEP 4：將 moment 帶入 props 中 */}
           <WeatherIcon
             currentWeatherCode={weatherElement.weatherCode}
-            moment="night"
+            moment={moment || 'day'}
           />
         </CurrentWeather>
         <AirFlow>
