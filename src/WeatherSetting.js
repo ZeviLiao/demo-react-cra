@@ -1,5 +1,6 @@
-import React, { useRef } from "react";
-import styled from "@emotion/styled";
+import React, { useState } from 'react';
+import styled from '@emotion/styled';
+import { availableLocations } from './utils';
 
 const WeatherSettingWrapper = styled.div`
   position: relative;
@@ -87,74 +88,51 @@ const Save = styled.button`
   }
 `;
 
-const locations = [
-    "嘉義縣",
-    "新北市",
-    "嘉義市",
-    "新竹縣",
-    "新竹市",
-    "臺北市",
-    "臺南市",
-    "宜蘭縣",
-    "苗栗縣",
-    "雲林縣",
-    "花蓮縣",
-    "臺中市",
-    "臺東縣",
-    "桃園市",
-    "南投縣",
-    "高雄市",
-    "金門縣",
-    "屏東縣",
-    "基隆市",
-    "澎湖縣",
-    "彰化縣",
-    "連江縣"
-];
+const locations = availableLocations.map(location => location.cityName);
 
-const WeatherSetting = ({ setCurrentPage }) => {
-    const inputLocationRef = useRef(null);
-    const renderCount = useRef(0);
+const WeatherSetting = ({ setCurrentPage, cityName, setCurrentCity }) => {
+  const [locationName, setLocationName] = useState(cityName);
 
-    const handleSave = () => {
-        const locationName = inputLocationRef.current.value;
-        console.log(locationName);
-        if (locations.includes(locationName)) {
-            // TODO: 儲存地區資訊...
-            console.log(`儲存的地區資訊為：${locationName}`);
-            setCurrentPage("WeatherCard");
-        } else {
-            alert(`儲存失敗：您輸入的 ${locationName} 並非有效的地區`);
-            return;
-        }
-    };
+  const handleChange = e => {
+    setLocationName(e.target.value);
+  };
 
-    return (
-        <WeatherSettingWrapper>
-            {(renderCount.current += 1)}
-            {console.log("render", renderCount.current)}
-            <Title>設定</Title>
-            <StyledLabel htmlFor="location">地區</StyledLabel>
-            <StyledInputList
-                list="location-list"
-                id="location"
-                name="location"
-                ref={inputLocationRef}
-                defaultValue="臺南市"
-            />
+  const handleSave = () => {
+    if (locations.includes(locationName)) {
+      // TODO: 儲存地區資訊...
+      console.log(`儲存的地區資訊為：${locationName}`);
+      setCurrentPage('WeatherCard');
+      setCurrentCity(locationName);
+    } else {
+      alert(`儲存失敗：您輸入的 ${locationName} 並非有效的地區`);
+      return;
+    }
+  };
 
-            <datalist id="location-list">
-                {locations.map(location => (
-                    <option value={location} key={location} />
-                ))}
-            </datalist>
+  return (
+    <WeatherSettingWrapper>
+      <Title>設定</Title>
+      <StyledLabel htmlFor="location">地區</StyledLabel>
+      <StyledInputList
+        list="location-list"
+        id="location"
+        name="location"
+        onChange={handleChange}
+        value={locationName}
+      />
 
-            <ButtonGroup>
-                <Back onClick={() => setCurrentPage("WeatherCard")}>返回</Back>
-                <Save onClick={handleSave}>儲存</Save>
-            </ButtonGroup>
-        </WeatherSettingWrapper>
-    );
+      <datalist id="location-list">
+        {locations.map(location => (
+          <option value={location} key={location} />
+        ))}
+      </datalist>
+
+      <ButtonGroup>
+        <Back onClick={() => setCurrentPage('WeatherCard')}>返回</Back>
+        <Save onClick={handleSave}>儲存</Save>
+      </ButtonGroup>
+    </WeatherSettingWrapper>
+  );
 };
 
 export default WeatherSetting;

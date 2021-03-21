@@ -5,6 +5,7 @@ import WeatherCard from './WeatherCard';
 import useWeatherApi from './useWeatherApi';
 import sunriseAndSunsetData from './sunrise-sunset.json';
 import WeatherSetting from './WeatherSetting';
+import { findLocation } from './utils';
 
 const theme = {
   light: {
@@ -67,23 +68,33 @@ const getMoment = locationName => {
 
 const WeatherApp = () => {
   console.log('--- invoke function component ---');
+  const storageCity = localStorage.getItem('cityName');
+  const [currentCity, setCurrentCity] = useState(storageCity || '臺北市');
+  const currentLocation = findLocation(currentCity) || {};
 
-  const [weatherElement, fetchData] = useWeatherApi();
+  const [weatherElement, fetchData] = useWeatherApi(currentLocation);
+
   const [currentTheme, setCurrentTheme] = useState('light');
   const [currentPage, setCurrentPage] = useState('WeatherCard');
-  const { locationName } = weatherElement;
 
-  const moment = useMemo(() => getMoment(locationName), [locationName]);
+  const moment = useMemo(() => getMoment(currentLocation.sunriseCityName), [
+    currentLocation.sunriseCityName,
+  ]);
 
   useEffect(() => {
     setCurrentTheme(moment === 'day' ? 'light' : 'dark');
   }, [moment]);
+
+  useEffect(() => {
+    localStorage.setItem('cityName', currentCity);
+  }, [currentCity]);
 
   return (
     <ThemeProvider theme={theme[currentTheme]}>
       <Container>
         {currentPage === 'WeatherCard' && (
           <WeatherCard
+            cityName={currentLocation.cityName}
             weatherElement={weatherElement}
             moment={moment}
             fetchData={fetchData}
@@ -92,7 +103,11 @@ const WeatherApp = () => {
         )}
 
         {currentPage === 'WeatherSetting' && (
-          <WeatherSetting setCurrentPage={setCurrentPage} />
+          <WeatherSetting
+            cityName={currentLocation.cityName}
+            setCurrentCity={setCurrentCity}
+            setCurrentPage={setCurrentPage}
+          />
         )}
       </Container>
     </ThemeProvider>
