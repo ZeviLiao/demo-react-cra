@@ -1,10 +1,10 @@
-// STEP 2：匯入 useMemo
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import WeatherIcon from './WeatherIcon.js';
 import { ReactComponent as AirFlowIcon } from './images/airFlow.svg';
 import { ReactComponent as RainIcon } from './images/rain.svg';
-import { ReactComponent as RedoIcon } from './images/refresh.svg';
+import { ReactComponent as RefreshIcon } from './images/refresh.svg';
+import { ReactComponent as LoadingIcon } from './images/loading.svg';
 import sunriseAndSunsetData from './sunrise-sunset.json';
 
 const Container = styled.div`
@@ -84,7 +84,7 @@ const Rain = styled.div`
   }
 `;
 
-const Redo = styled.div`
+const Refresh = styled.div`
   position: absolute;
   right: 15px;
   bottom: 15px;
@@ -98,6 +98,17 @@ const Redo = styled.div`
     width: 15px;
     height: 15px;
     cursor: pointer;
+    animation: rotate infinite 1.5s linear;
+    animation-duration: ${({ isLoading }) => (isLoading ? '1.5s' : '0s')};
+  }
+
+  @keyframes rotate {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
   }
 `;
 
@@ -155,7 +166,6 @@ const fetchWeatherForecast = () => {
     });
 };
 
-// STEP 1：定義 getMoment 方法
 const getMoment = locationName => {
   const location = sunriseAndSunsetData.find(
     data => data.locationName === locationName,
@@ -199,7 +209,20 @@ const WeatherApp = () => {
     weatherCode: 0,
     rainPossibility: 0,
     comfortability: '',
+    isLoading: true,
   });
+
+  const {
+    observationTime,
+    locationName,
+    temperature,
+    windSpeed,
+    description,
+    weatherCode,
+    rainPossibility,
+    comfortability,
+    isLoading,
+  } = weatherElement;
 
   const fetchData = useCallback(() => {
     const fetchingData = async () => {
@@ -211,57 +234,57 @@ const WeatherApp = () => {
       setWeatherElement({
         ...currentWeather,
         ...weatherForecast,
+        isLoading: false,
       });
     };
+
+    setWeatherElement(prevState => ({
+      ...prevState,
+      isLoading: true,
+    }));
 
     fetchingData();
   }, []);
 
-  // STEP 3：透過 useMemo 避免每次都須重新計算取值，記得帶入 dependencies
-  const moment = useMemo(() => getMoment(weatherElement.locationName), [
-    weatherElement.locationName,
-  ]);
+  const moment = useMemo(() => getMoment(locationName), [locationName]);
 
   useEffect(() => {
-    console.log('execute function in useEffect');
-
     fetchData();
   }, [fetchData]);
 
   return (
     <Container>
-      {console.log('render')}
+      {console.log('render, isLoading: ', isLoading)}
       <WeatherCard>
-        <Location>{weatherElement.locationName}</Location>
+        <Location>{locationName}</Location>
         <Description>
-          {weatherElement.description} {weatherElement.comfortability}
+          {description} {comfortability}
         </Description>
         <CurrentWeather>
           <Temperature>
-            {Math.round(weatherElement.temperature)} <Celsius>°C</Celsius>
+            {Math.round(temperature)} <Celsius>°C</Celsius>
           </Temperature>
-          {/* STEP 4：將 moment 帶入 props 中 */}
           <WeatherIcon
-            currentWeatherCode={weatherElement.weatherCode}
+            currentWeatherCode={weatherCode}
             moment={moment || 'day'}
           />
         </CurrentWeather>
         <AirFlow>
           <AirFlowIcon />
-          {weatherElement.windSpeed} m/h
+          {windSpeed} m/h
         </AirFlow>
         <Rain>
           <RainIcon />
-          {Math.round(weatherElement.rainPossibility)} %
+          {Math.round(rainPossibility)} %
         </Rain>
-        <Redo onClick={fetchData}>
+        <Refresh onClick={fetchData} isLoading={isLoading}>
           最後觀測時間：
           {new Intl.DateTimeFormat('zh-TW', {
             hour: 'numeric',
             minute: 'numeric',
-          }).format(new Date(weatherElement.observationTime))}{' '}
-          <RedoIcon />
-        </Redo>
+          }).format(new Date(observationTime))}{' '}
+          {isLoading ? <LoadingIcon /> : <RefreshIcon />}
+        </Refresh>
       </WeatherCard>
     </Container>
   );
