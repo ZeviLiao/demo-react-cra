@@ -1,3 +1,14 @@
+```
+git checkout feature/weatherApp
+yarn start
+```
+
+## demo
+
+https://boring-bohr-8360da.netlify.app/
+
+
+
 ### start here
 
 https://zh-hant.reactjs.org/docs/create-a-new-react-app.html  
